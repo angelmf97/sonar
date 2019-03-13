@@ -6,7 +6,7 @@ SONAR is a Python based programme used to find, within any given set of proteins
 ## Usage
 ----  
 Please, execute  
-    *sonar.py -h*  
+    `sonar.py -h`  
 or  
     *sonar.py -help*  
 for usage instructions.  
