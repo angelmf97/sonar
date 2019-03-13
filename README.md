@@ -7,16 +7,16 @@ SONAR is a Python based programme used to find, within any given set of proteins
 ## Usage  
   
 Please, execute  
-    > `sonar.py -h`  
+ > `sonar.py -h`  
 or  
-    > `sonar.py -help`  
+ > `sonar.py -help`  
 for usage instructions.  
   
 Use case:  
-    > `sonar.py (yourfile).fasta (commands) > (Destiny file)`  
+ > `sonar.py (yourfile).fasta (commands) > (Destiny file)`  
 The commands available are the following ones:  
  > -r or -R 	prints RADAR's output. Prints a table containing the information of the repeats found in the different genes.  
-    > -t or -T	displays RADAR's output in a table format.  
-    > -p or -P	prints a list of all the proteins containing repeats (only names).  
-    > -s or -S	prints the output of SignalP.  
+ -t or -T	displays RADAR's output in a table format.  
+ -p or -P	prints a list of all the proteins containing repeats (only names).  
+ -s or -S	prints the output of SignalP.  
 
