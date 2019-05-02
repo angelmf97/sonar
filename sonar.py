@@ -1,31 +1,20 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Oct  9 16:02:33 2018
-
-@author: angel
-"""
-
-# -*- coding: utf-8 -*-
-#!/usr/bin/env python3
-
 from sys import argv
 import re
 import subprocess
 import os
 from tempfile import NamedTemporaryFile
+import argparse
 
 """Help"""
-if ('-h' or '-help' or '--h' or '--help' or 'help') in argv:
-    print '\nThe arguments given must be the following ones:'
-    print 'python parseradarv4.py (commands) (> DestinationFile)\n'
-    print 'The commands available are the following ones:\n'
-    print '-r or -R\tprints RADAR output.\n-t\tprints a table containing the',
-    print 'information of the repeats found in the\n\tdifferent genes.'
-    print '-t or -T\tdisplays RADAR\'s output in a table format.'
-    print '-p or -P\tprints a list of all the proteins containing repeats (only names).'
-    print '-s or -S\tprints the output of SignalP.\n'
-    quit()
+parser=argparse.ArgumentParser(description='SONAR is a Python based programme used to find, within any given set of proteins, the subset of them containing both repeated sequences and signal sequences. It makes use of the software RADAR and SignalP 4.0.')
+parser.add_argument('-f','--file',metavar='',nargs=1,required=True,help='input file.')
+parser.add_argument('-r','--radar',action='store_true',required=False,help='prints RADAR\'s output')
+parser.add_argument('-t','--table',action='store_true',required=False,help='prints a table containing the information of the repeats found in the different genes.')
+parser.add_argument('-l','--list',action='store_true',required=False,help='prints SignalP\'s output')
+parser.add_argument('-s','--signalp',action='store_true',required=False,help='prints a list of all the proteins containing repeats (only names).')
+args=parser.parse_args()
+
+
 
 """Functions"""
 
@@ -116,43 +105,31 @@ def get_repeat_signal(signalp_output):
             list.append('>'+p.group(1))
     return list
 
-"""def create_fasta(list):
-    file=open(argv[1]).read()
-    fasta=open(str(argv[1])+'_result.fasta','w+')
-    for n in list:
-        re_proteins=re.compile(n)
-        p=re_proteins.finditer(file)
-        if p:
-            print p.group(0)
-    file.close()
-    fasta.close()"""
-
 
 
 """Program"""
 
-file_input=argv[1]
-radar_output=call_radar(file_input)
-if ('-r' or '-R') in argv:
+radar_output=call_radar(args.file[0])
+if args.radar:
     print radar_output,'\n'*2
 
 file_by_proteins=split_by_proteins(radar_output)
 
-if ('-t' or '-T') in argv:
+if args.table:
     print_table(file_by_proteins)
     print '\n'*2
 
 proteins_with_repeats=capture_proteins(file_by_proteins)
 
-if ('-p' or '-P') in argv:
+if args.list:
     print 'Proteins containing repeats: %s' % len(proteins_with_repeats), '\n'
     for n in proteins_with_repeats:
         print n
     print '\n'*2
 
-signalp_output=call_signalp(proteins_with_repeats,file_input)
+signalp_output=call_signalp(proteins_with_repeats,args.file[0])
 
-if ('-s' or '-S') in argv:
+if args.signalp:
     print signalp_output
     print '\n'*2
 
@@ -160,8 +137,5 @@ repeats_and_signal=get_repeat_signal(signalp_output)
 print 'Proteins containing both repeats and signal sequences: %s' % len(repeats_and_signal),'\n'
 for n in repeats_and_signal:
     print n
-
-"""if '-f' in argv:
-    create_fasta(repeats_and_signal)"""
 
 quit()
