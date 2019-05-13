@@ -5,7 +5,6 @@ import os
 from tempfile import NamedTemporaryFile
 import argparse
 
-"""Help"""
 parser=argparse.ArgumentParser(description='SONAR is a Python based programme used to find, within any given set of proteins, the subset of them containing both repeated sequences and signal sequences. It makes use of the software RADAR and SignalP 4.0.')
 parser.add_argument('-f','--file',metavar='',nargs=1,required=True,help='input file.')
 parser.add_argument('-r','--radar',action='store_true',required=False,help='prints RADAR\'s output')
@@ -16,13 +15,38 @@ args=parser.parse_args()
 
 
 
-"""Functions"""
 
 #Takes a .fasta file and gives it to RADAR. Then returns the RADAR's output.
 def call_radar(fasta):
-    command='radar.py %s' % fasta
-    radar_output=subprocess.check_output(command.split(' '), shell=False)
-    return radar_output
+    file=open(fasta).read()
+    splitted=file.split('>')
+    num=len(splitted)-1
+    print 'Lenght= %s' % num
+    proteins_with_repeats=[]
+    for n in splitted:
+        string='>'+n
+        re_jgi=re.compile('>.*\|.*\n')
+        search=re_jgi.search(string)
+        if search:
+            tempfile=NamedTemporaryFile()
+            tempfile.write(string)
+            try:
+                command='radar.py %s' % tempfile.name
+                radar_output=subprocess.check_output(command.split(' '), shell=False)
+                re_peats=re.compile('No repeats found')
+                re_search=re_peats.search(radar_output)
+                if re_search:
+                    continue
+                else:
+                    proteins_with_repeats.append(search.group())
+                continue
+            except Exception as inst:
+                print inst
+                re_jgi=re.compile('|.*\n')
+                search=re_jgi.search(n)
+                print search.group()
+    return proteins_with_repeats
+
 
 #Converts the output of radar to a string and then splits it by proteins
 def split_by_proteins(radar_output):
@@ -78,7 +102,7 @@ def capture_proteins(file_by_protein):
 #back from the original .fasta file and submits the sequences to SignalP.
 #Returns SignalP output
 def call_signalp(proteins_with_repeats,file_input):
-    temp=NamedTemporaryFile(dir='/home/angel/program')
+    temp=NamedTemporaryFile()
     string=[]
     for i in open(file_input):
         string.append(i)
@@ -107,19 +131,7 @@ def get_repeat_signal(signalp_output):
 
 
 
-"""Program"""
-
-radar_output=call_radar(args.file[0])
-if args.radar:
-    print radar_output,'\n'*2
-
-file_by_proteins=split_by_proteins(radar_output)
-
-if args.table:
-    print_table(file_by_proteins)
-    print '\n'*2
-
-proteins_with_repeats=capture_proteins(file_by_proteins)
+proteins_with_repeats=call_radar(args.file[0])
 
 if args.list:
     print 'Proteins containing repeats: %s' % len(proteins_with_repeats), '\n'
@@ -134,7 +146,7 @@ if args.signalp:
     print '\n'*2
 
 repeats_and_signal=get_repeat_signal(signalp_output)
-print 'Proteins containing both repeats and signal sequences: %s' % len(repeats_and_signal),'\n'
+print'Proteins containing both repeats and signal sequences: %s' % len(repeats_and_signal),'\n'
 for n in repeats_and_signal:
     print n
 
