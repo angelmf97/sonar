@@ -1,153 +1,164 @@
-from sys import argv
+#!/usr/bin/python
+
 import re
 import subprocess
 import os
 from tempfile import NamedTemporaryFile
 import argparse
+import xlsxwriter
+
 
 parser=argparse.ArgumentParser(description='SONAR is a Python based programme used to find, within any given set of proteins, the subset of them containing both repeated sequences and signal sequences. It makes use of the software RADAR and SignalP 4.0.')
-parser.add_argument('-f','--file',metavar='',nargs=1,required=True,help='input file.')
+
+parser.add_argument('-f','--file',metavar='',type=argparse.FileType(),required=False,help='input file.')
 parser.add_argument('-r','--radar',action='store_true',required=False,help='prints RADAR\'s output')
-parser.add_argument('-t','--table',action='store_true',required=False,help='prints a table containing the information of the repeats found in the different genes.')
-parser.add_argument('-l','--list',action='store_true',required=False,help='prints SignalP\'s output')
-parser.add_argument('-s','--signalp',action='store_true',required=False,help='prints a list of all the proteins containing repeats (only names).')
+parser.add_argument('-t','--table',action='store_true',required=False,help='prints two tables containing the information of RADAR (RCPs only) and SignalP-4.1 (secreted RCPs)')
+parser.add_argument('-s','--signalp',action='store_true',required=False,help='prints SignalP\'s output')
+parser.add_argument('-o','--output',type=str,metavar='',required=True,help='destination directory.')
+
 args=parser.parse_args()
 
 
-
-
-#Takes a .fasta file and gives it to RADAR. Then returns the RADAR's output.
-def call_radar(fasta):
-    file=open(fasta).read()
-    splitted=file.split('>')
-    num=len(splitted)-1
-    print 'Lenght= %s' % num
+#Takes a .fasta file and gives it to RADAR protein by protein. Then returns the RADAR's output.
+def callradar():
     proteins_with_repeats=[]
-    for n in splitted:
-        string='>'+n
-        re_jgi=re.compile('>.*\|.*\n')
-        search=re_jgi.search(string)
-        if search:
-            tempfile=NamedTemporaryFile()
-            tempfile.write(string)
-            try:
-                command='radar.py %s' % tempfile.name
-                radar_output=subprocess.check_output(command.split(' '), shell=False)
-                re_peats=re.compile('No repeats found')
-                re_search=re_peats.search(radar_output)
-                if re_search:
-                    continue
-                else:
-                    proteins_with_repeats.append(search.group())
-                continue
-            except Exception as inst:
-                print inst
-                re_jgi=re.compile('|.*\n')
-                search=re_jgi.search(n)
-                print search.group()
-    return proteins_with_repeats
-
-
-#Converts the output of radar to a string and then splits it by proteins
-def split_by_proteins(radar_output):
-    string=[]
-    for i in radar_output:
-        string.append(i)
-    file=''.join(string)
-    file_by_protein=re.split('\n(?=>)',file)
-    return file_by_protein
-
-#Takes a sorted-by-protein radar output and makes a table
-def print_table(file_by_protein):
-    re_header=re.compile('No.*Level')
-    re_protein=re.compile('(>.+)')
-    re_others=re.compile('\s+\d+\|\s+\d+\.\d+\|\s+\d+\|\s+\d+\|\s+\d+\|\s+\d+\|\s+\d+')
-    for i in file_by_protein:
-        print '\n'*2
-        flag=0
-        line=i.split('\n')
-        for n in range(len(line)):
-            p=re_protein.search(line[n])
-            h=re_header.search(line[n])
-            s=re_others.search(line[n])
-            if p:
-                #Prints protein names
-                print p.group(),'\n'
-            if h:
-                #Prints header
-                if flag==0:
-                    print '|',h.group(),'|'
-                    print '-'*75
-                    flag=1
-            if s:
-                #Prints values
-                print '|',s.group(),'|'
-            if line[n]=='No repeats found':
-                print 'No repeats found'
-
-#Takes a sorted-by-gene radar output and returns a list with all the proteins containing repeats
-def capture_proteins(file_by_protein):
-    proteins_with_repeats=[]
-    re_protein=re.compile('(>jgi\|.+)')
-    for i in file_by_protein:
-        p=re_protein.search(i)
-        line=i.split('\n')
-        if line[1]=='No repeats found':
-            continue
+    file=args.file.read().split('>')
+    list_of_proteins=[]
+    flag=0
+    
+    for n in file:
+        if flag==0:
+            flag=1
         else:
-            proteins_with_repeats.append(p.group())
-    return proteins_with_repeats
+            protein='>'+n
+            list_of_proteins.append(protein)
 
-#Takes a list of all the proteins containing repeats. Then gets those proteins sequence
-#back from the original .fasta file and submits the sequences to SignalP.
-#Returns SignalP output
-def call_signalp(proteins_with_repeats,file_input):
-    temp=NamedTemporaryFile()
+    radar_list=[]
+
+    for n in list_of_proteins:
+        radartemp=NamedTemporaryFile()
+        radartemp.write(n)
+        radartemp.read()
+
+        try:
+            command='radar.py %s' % radartemp.name
+            radar_output=subprocess.check_output(command.split(' '), shell=False)
+            re_search=re.search('No repeats found',radar_output)
+
+            if re_search:
+                continue
+
+            else:
+                proteins_with_repeats.append(n)
+                radar_list.append(radar_output)
+
+        except Exception as inst:
+            print inst
+            search='>.+\n'.search(n)
+            print 'Error in sequence:' + search.group()
+    
+    return radar_list,proteins_with_repeats
+
+#Takes the list of proteins containing repeats and passes it to SignalP-4.1
+def callsonar(proteins_with_repeats):
+    sonartemp=NamedTemporaryFile()
     string=[]
-    for i in open(file_input):
-        string.append(i)
-    file=''.join(string)
-    input_by_protein=re.split('\n(?=>)',file)
-    for n in input_by_protein:
-        for i in proteins_with_repeats:
-            if i in n:
-                temp.write('\n%s\n' % n)
-    temp.read()
-    command='signalp %s' % temp.name
+    
+    for n in proteins_with_repeats:
+        sonartemp.write(n)
+    sonartemp.read()
+    command='signalp %s' % sonartemp.name
     signalp_output=subprocess.check_output(command.split(' '), shell=False)
-    return signalp_output
-
-#Takes the SignalP output and returns a list of proteins containing both repeats
-#and signal sequences
-def get_repeat_signal(signalp_output):
-    lines=signalp_output.split('\n')
-    list=[]
+    sonarlines=signalp_output.split('\n')
+    repeats_and_signal=[]
     re_proteins=re.compile('([^\s]+)\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+Y\s+[^\s]+\s+[^\s]+')
-    for n in lines:
+    
+    for n in sonarlines:
         p=re_proteins.search(n)
         if p:
-            list.append('>'+p.group(1))
-    return list
+            for protein in proteins_with_repeats:
+                if p.group(1) in protein:
+                    repeats_and_signal.append(protein)
+    
+    return signalp_output,repeats_and_signal
 
+#Makes the tables    
+def maketables(radar_list,signalp_output):
+    workbook = xlsxwriter.Workbook(args.output+'/'+os.path.splitext(os.path.basename(args.file.name))[0]+'tables.xlsx')
+    sheet=workbook.add_worksheet('RADAR')
+    header=['Protein','No. of Repeats','Total Score','Length','Diagonal','BW-From','BW-To','Level']
+    col=0
 
+    for i in header:
+        sheet.write(0,col,i)
+        col+=1
 
-proteins_with_repeats=call_radar(args.file[0])
+    row=1
 
-if args.list:
-    print 'Proteins containing repeats: %s' % len(proteins_with_repeats), '\n'
-    for n in proteins_with_repeats:
-        print n
-    print '\n'*2
+    for protein in radar_list:
+        col=0
+        pname=re.search('(>.+)\n',protein)
+        numbers=re.findall('\s+\d+\|\s+\d+\.\d+\|\s+\d+\|\s+\d+\|\s+\d+\|\s+\d+\|\s+\d+',protein)
 
-signalp_output=call_signalp(proteins_with_repeats,args.file[0])
+        for h in numbers:
+            col=0
+            sheet.write(row,col,pname.group(1))
+            col+=1
+            splitted=h.split('|')
+            for value in splitted:
+                cleanvalue=value.strip()
+                sheet.write(row,col,cleanvalue)
+                col+=1
+            row+=1
+ 
+    sheet=workbook.add_worksheet('SignalP-4.1')
+    header=['name','Cmax','pos','Ymax','pos','Smax','pos','Smean','D','?','Dmaxcut','Networks-used']
+    
+    col=0
+    for i in header:
+        sheet.write(0,col,i)
+        col+=1
+    sonarlines=re.findall('[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+Y\s+[^\s]+\s+[^\s]+',signalp_output)
+    row=1
+    
+    for line in sonarlines:
+        splitted=line.split(' ')
+        
+        col=0
+        for value in splitted:
+            cleanvalue=value.strip()
+            if cleanvalue!='':
+                sheet.write(row,col,cleanvalue)
+                col+=1
+        row+=1
+    
+    workbook.close()
+    
+def main():
+    print '\n'
+    print 'Please wait, this could take several time.\n'
+    radar_list,proteins_with_repeats=callradar()
+    signalp_output,repeats_and_signal=callsonar(proteins_with_repeats)
+    out=open(args.output+'/'+os.path.splitext(os.path.basename(args.file.name))[0]+'results.fasta','w+')
+    
+    for protein in repeats_and_signal:
+        out.write(protein)
+    out.close()
+    
+    if args.radar:
+        for protein in radar_list:
+            print protein
+    
+    if args.signalp:
+        print signalp_output
 
-if args.signalp:
-    print signalp_output
-    print '\n'*2
+    if args.table:    
+        maketables(radar_list,signalp_output)
+	print 'Tables stored at %s \n' % out.name
+    
+    print 'Proteins containing repeats (RCPs) = %s' % len(proteins_with_repeats)
+    print 'Secreted RCPs = %s' % len(repeats_and_signal)
 
-repeats_and_signal=get_repeat_signal(signalp_output)
-print'Proteins containing both repeats and signal sequences: %s' % len(repeats_and_signal),'\n'
-for n in repeats_and_signal:
-    print n
+if __name__=="__main__":
+    main()
 
-quit()
