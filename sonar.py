@@ -13,7 +13,7 @@ parser.add_argument('-f','--file',metavar='',type=argparse.FileType(),required=T
 parser.add_argument('-t','--table',action='store_true',required=False,help='prints two tables containing the information of RADAR (RCPs only) and SignalP-4.1 (secreted RCPs).')
 parser.add_argument('-r','--radar',action='store_true',required=False,help='prints the output of RADAR.')
 parser.add_argument('-s','--signalp',action='store_true',required=False,help='prints the output of SignalP 4.1.')
-parser.add_argument('-o','--output',type=str,metavar='',required=False,default='.',help='destination directory.')
+parser.add_argument('-o','--output',type=str,metavar='',required=False,default='.',help='destination directory of the tables and the proteins found.')
 
 args=parser.parse_args()
 
