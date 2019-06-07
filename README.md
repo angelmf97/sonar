@@ -1,7 +1,7 @@
 ----
 # Sonar
  
-Sonar is a Python based script used to find, within any given set of proteins, the subset of them containing both repeated sequences and signal sequences, also known as secreted RCPs (repeat-containing proteins). It makes use of the programmes RADAR and SignalP 4.0.  
+Sonar is a Python based script used to find, within any given set of proteins, the subset of secreted RCPs, i.e. those proteins contaning both internal repeats and secretion signal. It makes use of the programmes RADAR and SignalP 4.0.  
 
 ----
 ## Usage  
