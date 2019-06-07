@@ -11,17 +11,22 @@ Please, execute
  * `sonar.py -h`  
  
 or  
- * `sonar.py -help`  
+ * `sonar.py --help`  
  
 for usage instructions.  
   
-Use case:  
+Simplest use case:  
 
- * `sonar.py (yourfile).fasta (commands) > (Destiny file)`  
+ * `sonar.py -f example.fasta`  
+
+An example file can be found in this repository.
   
 The commands available are the following ones:  
- * -r or -R 	prints RADAR's output. Prints a table containing the information of the repeats found in the different genes.  
- -t or -T	displays RADAR's output in a table format.  
- -p or -P	prints a list of all the proteins containing repeats (only names).  
- -s or -S	prints the output of SignalP.  
+
+| Command       | Function                         |
+|---------------|----------------------------------|
+| -h, --help    | show this help message and exit. |
+| -f , --file   | input file.                      |
+| -r, --radar   | prints the output of RADAR.      |
+| -o , --output | destination directory.           |
 
