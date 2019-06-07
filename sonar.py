@@ -8,7 +8,7 @@ import argparse
 import xlsxwriter
 
 
-parser=argparse.ArgumentParser(description='Sonar is a Python based script used to find, within any given set of proteins, the subset of them containing both repeated sequences and signal sequences, also known as secreted RCPs (repeat-containing proteins). It makes use of the programmes RADAR and SignalP 4.0.')
+parser=argparse.ArgumentParser(description='Sonar is a Python based script used to find, within any given set of proteins, the subset of secreted RCPs, i.e. those proteins contaning both internal repeats and secretion signal. It makes use of the programmes RADAR and SignalP 4.0.')
 parser.add_argument('-f','--file',metavar='',type=argparse.FileType(),required=True,help='input file.')
 parser.add_argument('-t','--table',action='store_true',required=False,help='prints two tables containing the information of RADAR (RCPs only) and SignalP-4.1 (secreted RCPs).')
 parser.add_argument('-r','--radar',action='store_true',required=False,help='prints the output of RADAR.')
