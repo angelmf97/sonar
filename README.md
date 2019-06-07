@@ -29,7 +29,7 @@ The commands available are the following ones:
 | -h, --help    | show this help message and exit. |
 | -f , --file   | input file.                      |
 | -r, --radar   | prints the output of RADAR.      |
-| -o , --output | destination directory.           |
+| -o , --output | destination directory of the tables and the list of proteins found.           |
 
 ## Requisites
   * Python 2.
