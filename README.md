@@ -30,4 +30,8 @@ The commands available are the following ones:
 | -r, --radar   | prints the output of RADAR.      |
 | -o , --output | destination directory.           |
 
-
+## Requisites
+  * Python 2.
+  * Having RADAR installed (https://github.com/AndreasHeger/radar).
+  * Having SignalP 4.0 installed.
+  * Having the package XlsxWriter installed (https://pypi.org/project/XlsxWriter/).
