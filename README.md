@@ -7,18 +7,19 @@ Sonar is a Python based script used to find, within any given set of proteins, t
 ## Usage  
   
 Please, execute  
-
- * `sonar.py -h`  
- 
+```
+sonar.py -h  
+```
 or  
- * `sonar.py --help`  
- 
+```
+sonar.py --help  
+```
 for usage instructions.  
   
 Simplest use case:  
-
- * `sonar.py -f example.fasta`  
-
+```
+sonar.py -f example.fasta  
+```
 An example file can be found in this repository.
   
 The commands available are the following ones:  
