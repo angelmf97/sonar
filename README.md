@@ -30,3 +30,4 @@ The commands available are the following ones:
 | -r, --radar   | prints the output of RADAR.      |
 | -o , --output | destination directory.           |
 
+
